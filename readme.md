@@ -94,6 +94,21 @@ The server is now running. The terminal will show a message like `(71880) wsgi s
 | Toggle Fullscreen |   `⛶`   |        `f`        |
 | Recalibrate     |   `🔄`   |        N/A        |
 
+
+| InsightLens App Screenshots |
+| :---: |
+| **1. Initial Viewer: Waiting for Connection** |
+| <img src="https://github.com/previousdolphin/insightlens_local/blob/main/1%20-%20insightlens.png" alt="Initial viewer port 5000" width="600"> |
+| **2. Initial Camera View on Phone** |
+| <img src="https://github.com/previousdolphin/insightlens_local/blob/main/0%20-%20insightlens.png" alt="Initial camera" width="600"> |
+| **3. Accepting Camera Permissions** |
+| <img src="https://github.com/previousdolphin/insightlens_local/blob/main/2%20-%20insightlens.png" alt="Accepting camera" width="600"> |
+| **4. Live Stream in Viewer (Post-Calibration)** |
+| <img src="https://github.com/previousdolphin/insightlens_local/blob/main/3%20-%20insightlens.png" alt="Viewing camera in viewer" width="600"> |
+| **5. Zoomed & Frozen Frame in Viewer** |
+| <img src="https://github.com/previousdolphin/insightlens_local/blob/main/4%20-%20insightlens.png" alt="Zoomed viewer / frozen viewer" width="600"> |
+
+
 ## troubleshooting
 
 ### "Address already in use" Error
