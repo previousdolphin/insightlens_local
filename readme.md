@@ -1,6 +1,6 @@
 # 🔍 InsightLens - Local Camera Streaming
 
-InsightLens is a local web application that turns your phone into a high-quality, real-time document camera. It streams video from your phone's camera directly to an immersive, full-screen viewer in your desktop browser over your local Wi-Fi network.
+InsightLens is a local web application that turns your phone into a high-quality, real-time document camera. It streams video from your phone's camera (or from a webcam on the same device... really whatever camera you connect) directly to an immersive, full-screen viewer in your desktop browser over your local Wi-Fi network.
 
 ## Features
 
