@@ -1,4 +1,8 @@
 # 🔍 InsightLens - Local Camera Streaming
+| See through your camera via https! |
+| :---: |
+| **1. Camera Phone Looking down, ui showing it! ** |
+| <img src="https://github.com/previousdolphin/insightlens_local/blob/main/5%20-%20insightlens.png" alt="Initial viewer port 5000" width="600"> |
 
 InsightLens is a local web application that turns your phone into a high-quality, real-time document camera. It streams video from your phone's camera (or from a webcam on the same device... really whatever camera you connect) directly to an immersive, full-screen viewer in your desktop browser over your local Wi-Fi network.
 
