@@ -13,12 +13,10 @@ class InsightLensViewer {
     }
 
     init() {
-        // Find all DOM elements after the page has loaded
         this.elements = {
             viewerContainer: document.getElementById('viewer-container'),
             liveStream: document.getElementById('live-stream'),
             setupOverlay: document.getElementById('setup-overlay'),
-            calibrationOverlay: document.getElementById('calibration-overlay'),
             errorModal: document.getElementById('error-modal'),
             statusBar: document.getElementById('status-bar'),
             viewerControls: document.getElementById('viewer-controls'),
@@ -26,16 +24,13 @@ class InsightLensViewer {
             copyUrlBtn: document.getElementById('copy-url-btn'),
             cameraUrl: document.getElementById('camera-url'),
             setupStatus: document.getElementById('setup-status'),
-            setFrameBtn: document.getElementById('set-frame-btn'),
-            skipCalibrationBtn: document.getElementById('skip-calibration-btn'),
             connectionIndicator: document.getElementById('connection-indicator'),
-            connectionStatus: document.getElementById('connection-status'),
+            // MODIFIED: Added connectionText element
+            connectionText: document.getElementById('connection-text'),
             fpsCounter: document.getElementById('fps-counter'),
-            latencyDisplay: document.getElementById('latency-display'),
             zoomInBtn: document.getElementById('zoom-in-btn'),
             zoomOutBtn: document.getElementById('zoom-out-btn'),
             zoomLevel: document.getElementById('zoom-level'),
-            recalibrateBtn: document.getElementById('recalibrate-btn'),
             freezeBtn: document.getElementById('freeze-btn'),
             panBtn: document.getElementById('pan-btn'),
             resetViewBtn: document.getElementById('reset-view-btn'),
@@ -47,14 +42,12 @@ class InsightLensViewer {
         };
 
         this.showOverlay('setup');
-
         this.setupEventListeners();
         this.setupSocketIO();
     }
 
     setupSocketIO() {
-        const socketUrl = `${window.location.protocol}//${window.location.host}`;
-        this.socket = io(socketUrl, { transports: ['websocket'], secure: true });
+        this.socket = io({ transports: ['websocket'] });
 
         this.socket.on('connect', () => {
             this.updateConnectionStatus('Server Connected', true, 'Waiting for camera...');
@@ -66,15 +59,13 @@ class InsightLensViewer {
             this.showError('Lost connection to the server.');
         });
 
-        this.socket.on('camera_connected', () => {
+        const onCameraConnect = () => {
             this.updateConnectionStatus('Camera Connected', true);
-            this.showOverlay('calibration');
-        });
+            this.showOverlay(null);
+        };
 
-        this.socket.on('camera_already_connected', () => {
-            this.updateConnectionStatus('Camera Connected', true);
-            this.showOverlay('calibration');
-        });
+        this.socket.on('camera_connected', onCameraConnect);
+        this.socket.on('camera_already_connected', onCameraConnect);
 
         this.socket.on('camera_disconnected', () => {
             this.updateConnectionStatus('Camera Disconnected', false, 'Waiting for camera...');
@@ -86,29 +77,12 @@ class InsightLensViewer {
             if (!this.isFrozen) {
                 this.elements.liveStream.src = data.image;
                 this.updateFPS();
-                this.socket.emit('frame_acknowledged', { timestamp: data.timestamp });
             }
-            if (this.elements.setFrameBtn.disabled) {
-                this.elements.setFrameBtn.disabled = false;
-            }
-        });
-
-        this.socket.on('calibration_complete', () => {
-            this.showOverlay(null); // Hide all overlays to show the live view
-        });
-
-        this.socket.on('stats_update', (stats) => {
-            this.elements.latencyDisplay.textContent = `${Math.round(stats.latency_ms)}ms`;
         });
     }
 
     setupEventListeners() {
         this.elements.copyUrlBtn.addEventListener('click', () => this.copyToClipboard());
-        this.elements.setFrameBtn.addEventListener('click', () => {
-            this.socket.emit('calibrate_frame', { image: this.elements.liveStream.src });
-        });
-        this.elements.skipCalibrationBtn.addEventListener('click', () => this.showOverlay(null));
-        this.elements.recalibrateBtn.addEventListener('click', () => this.showOverlay('calibration'));
         this.elements.freezeBtn.addEventListener('click', () => this.toggleFreeze());
         this.elements.panBtn.addEventListener('click', () => this.togglePanMode());
         this.elements.resetViewBtn.addEventListener('click', () => this.resetView());
@@ -154,7 +128,7 @@ class InsightLensViewer {
     }
 
     showOverlay(overlayId) {
-        ['setup', 'calibration', 'error'].forEach(id => {
+        ['setup', 'error'].forEach(id => {
             const el = this.elements[`${id}${id === 'error' ? 'Modal' : 'Overlay'}`];
             if (id === overlayId) {
                 el.classList.remove('hidden');
@@ -176,7 +150,8 @@ class InsightLensViewer {
 
     updateConnectionStatus(text, isConnected, setupText = '') {
         this.elements.connectionIndicator.className = `indicator ${isConnected ? 'connected' : 'disconnected'}`;
-        this.elements.connectionStatus.querySelector('span').textContent = text;
+        // MODIFIED: Target the correct element by its new ID
+        this.elements.connectionText.textContent = text;
         if (setupText) {
             this.elements.setupStatus.innerHTML = `<span class="spinner"></span>${setupText}`;
         }
@@ -246,11 +221,10 @@ class InsightLensViewer {
     }
 
     handleKeyboard(e) {
-        if (this.elements.setupOverlay.classList.contains('hidden') && this.elements.calibrationOverlay.classList.contains('hidden')) {
-            // Handle arrow keys for panning if pan mode is active
+        if (this.elements.setupOverlay.classList.contains('hidden')) {
             if (this.panMode && e.key.startsWith('Arrow')) {
                 e.preventDefault();
-                const panAmount = 10;
+                const panAmount = 10 / this.transform.scale;
                 switch (e.key) {
                     case 'ArrowUp': this.transform.y += panAmount; break;
                     case 'ArrowDown': this.transform.y -= panAmount; break;
@@ -258,10 +232,9 @@ class InsightLensViewer {
                     case 'ArrowRight': this.transform.x -= panAmount; break;
                 }
                 this.updateTransform();
-                return; // Stop further processing
+                return;
             }
 
-            // Handle other shortcuts
             switch (e.key) {
                 case '+': case '=': this.zoom(1.2); break;
                 case '-': this.zoom(0.8); break;

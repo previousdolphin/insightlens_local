@@ -1,12 +1,12 @@
 # 🔍 InsightLens - Local Camera Streaming
-
-InsightLens is a local web application that turns your phone into a high-quality, real-time document camera. It streams video from your phone's camera (or from a webcam on the same device... really whatever camera you connect) directly to an immersive, full-screen viewer in your desktop browser over your local Wi-Fi network.
+<center><img src="https://github.com/previousdolphin/insightlens_local/blob/main/6%20-%20insightlens.png" alt="Initial viewer port 5000" width="600"></center>
+InsightLens is a local web application that turns your phone into a high-quality, real-time document camera. It streams video from your phone's camera directly to an immersive, full-screen viewer in your desktop browser over your local Wi-Fi network.
 
 ## Features
 
 * **Immersive Full-Screen View:** The viewer displays the camera feed full-screen, with a floating UI that can be hidden for an unobstructed view.
 * **Easy Setup:** Connect your phone by scanning a QR code—no apps to install.
-* **Interactive Viewer:** Features digital pan, zoom, freeze-frame, and calibration tools.
+* **Interactive Viewer:** Features digital pan, zoom, and freeze-frame controls.
 * **Real-time Control:** Adjust camera settings like zoom, flash, and quality directly from the phone.
 * **Resilient Connection:** Viewers can refresh the page and automatically reconnect to an active camera stream.
 
@@ -73,6 +73,7 @@ The server is now running. The terminal will show a message like `(71880) wsgi s
 ### Step 6: Access and Connect
 
 1.  **Open the Viewer:** On your Mac, open a web browser and go to the server address (e.g., `https://192.168.1.10:5000` or `https://localhost:5000`).
+
 2.  **Connect Your Phone:**
     * Make sure your phone is connected to the **same Wi-Fi network** as your Mac.
     * Scan the QR code displayed on the viewer page.
@@ -82,6 +83,16 @@ The server is now running. The terminal will show a message like `(71880) wsgi s
 > When you first open the camera page on your phone, your browser will show a security warning. This is expected because the certificate is self-signed.
 >
 > You must tap **"Advanced"** and then **"Proceed to [your IP address] (unsafe)"**. This is safe to do, as you are connecting to your own computer.
+
+| InsightLens App Screenshots |
+| :---: |
+| **1. Initial Viewer: Waiting for Connection** |
+| <img src="https://github.com/previousdolphin/insightlens_local/blob/main/1%20-%20insightlens.png" alt="Initial viewer port 5000" width="600"> |
+| **2. Initial Camera View on Phone** |
+| <img src="https://github.com/previousdolphin/insightlens_local/blob/main/0%20-%20insightlens.png" alt="Initial camera" width="600"> |
+| **3. Accepting Camera Permissions** |
+| <img src="https://github.com/previousdolphin/insightlens_local/blob/main/2%20-%20insightlens.png" alt="Accepting camera" width="600"> |
+
 
 ## ⌨️ Viewer Controls
 
@@ -93,21 +104,6 @@ The server is now running. The terminal will show a message like `(71880) wsgi s
 | Hide/Show HUD   |   `👀`   |        `h`        |
 | Toggle Fullscreen |   `⛶`   |        `f`        |
 | Recalibrate     |   `🔄`   |        N/A        |
-
-
-| InsightLens App Screenshots |
-| :---: |
-| **1. Initial Viewer: Waiting for Connection** |
-| <img src="https://github.com/previousdolphin/insightlens_local/blob/main/1%20-%20insightlens.png" alt="Initial viewer port 5000" width="600"> |
-| **2. Initial Camera View on Phone** |
-| <img src="https://github.com/previousdolphin/insightlens_local/blob/main/0%20-%20insightlens.png" alt="Initial camera" width="600"> |
-| **3. Accepting Camera Permissions** |
-| <img src="https://github.com/previousdolphin/insightlens_local/blob/main/2%20-%20insightlens.png" alt="Accepting camera" width="600"> |
-| **4. Live Stream in Viewer (Post-Calibration)** |
-| <img src="https://github.com/previousdolphin/insightlens_local/blob/main/3%20-%20insightlens.png" alt="Viewing camera in viewer" width="600"> |
-| **5. Zoomed & Frozen Frame in Viewer** |
-| <img src="https://github.com/previousdolphin/insightlens_local/blob/main/4%20-%20insightlens.png" alt="Zoomed viewer / frozen viewer" width="600"> |
-
 
 ## troubleshooting
 
