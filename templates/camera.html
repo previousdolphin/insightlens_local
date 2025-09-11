@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>InsightLens - Camera</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v=cache_buster) }}">
+</head>
+<body class="camera-body">
+    <!-- Camera Start Overlay -->
+    <div id="start-overlay" class="overlay-container">
+        <div class="overlay-panel">
+            <h1>📷</h1>
+            <h2>Camera Ready</h2>
+            <p>Tap below to begin streaming to your viewer.</p>
+            <button id="start-camera-btn" class="primary-btn">Start Camera</button>
+        </div>
+    </div>
+
+    <!-- This wrapper contains the entire camera UI, hidden by default -->
+    <div id="camera-ui-wrapper" class="hidden">
+        <div id="camera-status">
+            <div class="status-indicator">
+                <span id="connection-dot" class="dot disconnected"></span>
+                <span id="connection-status">Connecting...</span>
+            </div>
+            <div id="stream-info">
+                <span id="resolution-display"></span>
+            </div>
+        </div>
+
+        <div id="camera-container">
+            <video id="camera-view" autoplay playsinline muted></video>
+            <div id="camera-overlay">
+                <div id="focus-indicator"></div>
+            </div>
+            <div id="camera-loading" class="loading-overlay hidden">
+                <div class="spinner"></div>
+                <p>Requesting camera access...</p>
+            </div>
+            <div id="camera-error" class="error-overlay hidden">
+                <div class="error-content">
+                    <h3>📷 Camera Access Required</h3>
+                    <p id="error-text">Please allow camera access to continue.</p>
+                    <button id="retry-camera-btn">Retry</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="camera-controls">
+            <div class="control-group" id="zoom-control-group" style="display:none;">
+                <label for="zoom-slider">
+                    <span class="control-icon">🔍</span>
+                    <span id="zoom-display">1.0x</span>
+                </label>
+                <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="1">
+            </div>
+
+            <div class="control-group" id="torch-control-group" style="display:none;">
+                 <button id="torch-btn" class="control-button toggle-btn">
+                    <span class="control-icon">🔦</span>
+                    <span id="torch-text">Flash</span>
+                </button>
+            </div>
+
+            <div class="control-group">
+                <label for="framerate-select">
+                    <span class="control-icon">⚡</span>
+                    <span>FPS</span>
+                </label>
+                <select id="framerate-select">
+                    <option value="10">10</option>
+                    <option value="15" selected>15</option>
+                    <option value="24">24</option>
+                    <option value="30">30</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="resolution-select">
+                    <span class="control-icon">📐</span>
+                    <span>Quality</span>
+                </label>
+                <select id="resolution-select">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="frame-canvas" style="display:none;"></canvas>
+    <div id="notification-toast" class="hidden">
+        <span id="toast-message"></span>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/camera.js', v=cache_buster) }}"></script>
+</body>
+</html>

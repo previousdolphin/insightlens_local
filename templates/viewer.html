@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>InsightLens - Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v=cache_version) }}">
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen overflow-hidden">
+    <!-- Main Fullscreen Container -->
+    <div id="viewer-container" class="relative w-full h-screen">
+        <!-- Live Video Feed (Background) -->
+        <img id="live-stream" alt="Live camera feed" class="absolute top-0 left-0 w-full h-full object-contain transform-gpu transition-transform duration-100 ease-out">
+
+        <!-- Setup Overlay -->
+        <div id="setup-overlay" class="overlay hidden flex-col items-center justify-center text-center p-8">
+            <div class="glass-panel">
+                <h1 class="text-5xl font-bold mb-4">🔍 InsightLens</h1>
+                <h2 class="text-2xl mb-6">Connect Camera</h2>
+                <p class="mb-6">Scan the QR code with your phone's camera, or manually enter the URL.</p>
+                <div class="bg-white p-4 rounded-lg inline-block shadow-lg">
+                    <img src="{{ url_for('static', filename='qrcode.png') }}" alt="QR Code" class="w-48 h-48 mx-auto">
+                </div>
+                <div class="bg-gray-800 text-green-400 font-mono text-sm p-3 rounded-lg mt-6 flex items-center gap-4">
+                    <span id="camera-url" class="truncate">{{ camera_url }}</span>
+                    <button id="copy-url-btn" title="Copy URL" class="text-xl hover:text-green-300">📋</button>
+                </div>
+                <p id="setup-status" class="mt-8 text-lg flex items-center justify-center gap-3">
+                    <span class="spinner"></span>Waiting for Camera...
+                </p>
+            </div>
+        </div>
+
+        <!-- Calibration Overlay -->
+        <div id="calibration-overlay" class="overlay hidden flex-col items-center justify-center text-center p-8">
+            <div class="glass-panel">
+                <h2 class="text-2xl font-bold mb-4">📐 Calibrate Canvas</h2>
+                <p class="mb-6">Position your camera, then click "Set Frame" to define the background.</p>
+                <div class="flex items-center justify-center gap-4">
+                    <button id="set-frame-btn" class="control-btn primary" disabled>🎯&nbsp;Set Frame</button>
+                    <button id="skip-calibration-btn" class="control-btn">Skip</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Status Bar -->
+        <div id="status-bar" class="status-bar hidden">
+            <div id="connection-status">
+                <span id="connection-indicator" class="indicator disconnected"></span>
+                <span>Waiting for camera...</span>
+            </div>
+            <div class="flex gap-6">
+                <span>FPS: <strong id="fps-counter">0</strong></span>
+                <span>Latency: <strong id="latency-display">0ms</strong></span>
+            </div>
+        </div>
+
+        <!-- Main UI Controls -->
+        <div id="viewer-controls" class="viewer-controls hidden">
+            <div class="control-group">
+                <button id="zoom-in-btn" class="control-btn" title="Zoom In (+)">+</button>
+                <span id="zoom-level" class="text-sm font-bold">100%</span>
+                <button id="zoom-out-btn" class="control-btn" title="Zoom Out (-)">-</button>
+            </div>
+            <div class="control-buttons">
+                <button id="recalibrate-btn" class="control-btn" title="Recalibrate">🔄</button>
+                <button id="freeze-btn" class="control-btn" title="Freeze Frame (Space)">⏸️</button>
+                <button id="pan-btn" class="control-btn" title="Pan Mode (P)">🖐️</button>
+                <button id="reset-view-btn" class="control-btn" title="Reset View (0)">⌂</button>
+                <button id="hud-toggle-btn" class="control-btn" title="Hide/Show HUD (H)">👀</button>
+                <button id="fullscreen-btn" class="control-btn" title="Fullscreen (F)">⛶</button>
+            </div>
+        </div>
+
+        <!-- Keyboard Shortcuts Legend -->
+        <div id="shortcuts-legend" class="shortcuts-legend hidden">
+            <h4 class="font-bold text-sm mb-2 border-b border-white/20 pb-1">Shortcuts</h4>
+            <table>
+                <tbody>
+                    <tr><td>Zoom:</td><td class="text-right font-mono font-bold">[+] / [-]</td></tr>
+                    <tr><td>Reset:</td><td class="text-right font-mono font-bold">[0]</td></tr>
+                    <tr><td>Freeze:</td><td class="text-right font-mono font-bold">[Space]</td></tr>
+                    <tr><td>Pan Mode:</td><td class="text-right font-mono font-bold">[P]</td></tr>
+                    <tr><td>Fine Pan:</td><td class="text-right font-mono font-bold">[Arrows]</td></tr>
+                    <tr><td>Hide HUD:</td><td class="text-right font-mono font-bold">[H]</td></tr>
+                    <tr><td>Fullscreen:</td><td class="text-right font-mono font-bold">[F]</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Error Modal -->
+        <div id="error-modal" class="overlay hidden flex-col items-center justify-center text-center p-8">
+            <div class="glass-panel border-red-500/50">
+                <span class="close-btn" id="close-error-btn">&times;</span>
+                <h3 class="text-2xl font-bold mb-4 text-red-400">⚠️ Connection Error</h3>
+                <p id="error-message"></p>
+                <button id="retry-btn" class="control-btn primary mt-6">Retry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/viewer.js', v=cache_version) }}"></script>
+</body>
+</html>
