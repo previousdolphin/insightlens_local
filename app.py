@@ -5,6 +5,8 @@ import logging
 import socket
 import netifaces
 import qrcode
+import eventlet
+from eventlet import wsgi
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, join_room, leave_room, emit
 from OpenSSL import crypto
@@ -22,16 +24,13 @@ def resource_path(relative_path):
 def generate_self_signed_cert(cert_path, key_path):
     """Generates a self-signed SSL certificate if it doesn't exist."""
     if os.path.exists(cert_path) and os.path.exists(key_path):
-        # Optional: Check for expiration here if needed
         logging.info("SSL certificate already exists.")
         return
 
     logging.info("Generating new self-signed SSL certificate...")
-    # Create a key pair
     key = crypto.PKey()
     key.generate_key(crypto.TYPE_RSA, 4096)
 
-    # Create a self-signed certificate
     cert = crypto.X509()
     cert.get_subject().C = "US"
     cert.get_subject().ST = "California"
@@ -63,7 +62,7 @@ generate_self_signed_cert(CERT_FILE, KEY_FILE)
 # --- Basic Configuration ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-app = Flask(__name__, template_folder=resource_path('templates'))
+app = Flask(__name__, template_folder=resource_path('templates'), static_folder=resource_path('static'))
 app.config['SECRET_KEY'] = 'your-super-secret-key-change-me'
 socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins="*")
 
@@ -89,7 +88,6 @@ def get_local_ip():
     except Exception as e:
         logging.warning(f"Could not find preferred IP via netifaces: {e}")
 
-    # Fallback method
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(('8.8.8.8', 1))
@@ -153,7 +151,10 @@ def handle_camera_joined(data=None):
 
 @socketio.on('video_frame')
 def handle_video_frame(data):
-    emit('new_frame', data, room=VIEWERS_ROOM, include_self=False)
+    # Use the socketio app as a context for emitting
+    with app.app_context():
+        socketio.emit('new_frame', data, room=VIEWERS_ROOM, include_self=False)
+
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -170,21 +171,24 @@ if __name__ == '__main__':
 
     static_folder_path = resource_path('static')
     camera_url = generate_qr_code(static_folder_path)
+    local_ip = get_local_ip()
 
-    print(f"Server starting on https://{get_local_ip()}:5000")
+    print(f"Server starting on https://{local_ip}:5000")
     print(f"Point your phone's camera to this URL or scan the QR in the viewer: {camera_url}")
     print("--------------------------")
 
-    ssl_context = (CERT_FILE, KEY_FILE)
-
     try:
-        socketio.run(
-            app,
-            host='0.0.0.0',
-            port=5000,
-            ssl_context=ssl_context,
-            debug=False
-        )
+        # Manually set up the eventlet server to handle SSL correctly
+        listener = eventlet.listen(('0.0.0.0', 5000))
+
+        ssl_listener = eventlet.wrap_ssl(listener,
+                                         certfile=CERT_FILE,
+                                         keyfile=KEY_FILE,
+                                         server_side=True)
+
+        # Use SocketIO's WSGI middleware and start the server
+        wsgi.server(ssl_listener, socketio.server)
+
     except Exception as e:
         logging.error(f"Failed to start server: {e}")
         if "Address already in use" in str(e):
