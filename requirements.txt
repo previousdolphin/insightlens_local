@@ -4,5 +4,4 @@ python-socketio
 qrcode[pil]
 netifaces
 eventlet
-python-dotenv==1.0.1
 pyOpenSSL

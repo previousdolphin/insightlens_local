@@ -2,90 +2,192 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InsightLens - Viewer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v=cache_version) }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>InsightLens Viewer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #111;
+            --text-color: #f0f0f0;
+            --primary-color: #3b82f6;
+            --card-bg: #1e1e1e;
+            --border-color: #333;
+            --icon-color: #999;
+            --icon-hover-color: #fff;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #video-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none;
+            cursor: grab;
+        }
+        #video-container.panning { cursor: grabbing; }
+        #video-stream {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+        }
+        #connection-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+        }
+        .status-card {
+            background-color: var(--card-bg);
+            padding: 3rem 4rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .logo { font-size: 2rem; font-weight: 600; }
+        .logo .icon { margin-right: 0.5rem; }
+        #qr-code-container img {
+            border-radius: 0.5rem;
+            border: 4px solid var(--border-color);
+        }
+        #camera-url {
+            background-color: #2a2a2a;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            word-break: break-all;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+        }
+        .status-text {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--icon-color);
+        }
+        .spinner {
+            width: 1em;
+            height: 1em;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-white overflow-hidden">
-    <div id="viewer-container" class="relative w-screen h-screen">
-        <!-- Live Stream Image -->
-        <img id="live-stream" alt="Live camera feed will appear here" class="absolute top-0 left-0 w-full h-full object-contain transform-gpu transition-transform duration-100 ease-linear">
+<body>
 
-        <!-- Setup Overlay -->
-        <div id="setup-overlay" class="absolute inset-0 bg-gray-900/80 backdrop-blur-lg flex items-center justify-center transition-opacity duration-300">
-            <div class="bg-gray-800 border border-gray-700 rounded-2xl p-8 max-w-lg w-full text-center shadow-2xl">
-                <h1 class="text-4xl font-bold mb-2">🔍 InsightLens</h1>
-                <p class="text-gray-400 mb-6">Connect Your Camera</p>
-                <div class="qr-container bg-white p-4 rounded-xl inline-block">
-                    <img src="{{ url_for('static', filename='qrcode.png') }}" alt="QR Code" class="w-48 h-48">
-                </div>
-                <div class="url-display bg-gray-900 rounded-lg p-3 mt-4 flex items-center">
-                    <code id="camera-url" class="text-green-400 text-sm overflow-x-auto whitespace-nowrap">{{ camera_url }}</code>
-                    <button id="copy-url-btn" title="Copy URL" class="ml-4 text-gray-400 hover:text-white">📋</button>
-                </div>
-                <div id="setup-status" class="mt-6 flex items-center justify-center text-gray-300">
-                    <span class="spinner"></span>Waiting for camera...
-                </div>
+    <div id="connection-status">
+        <div class="status-card">
+            <div class="logo"><span class="icon">🔍</span>InsightLens</div>
+            <p>Scan the QR code with your phone's camera.</p>
+            <div id="qr-code-container">
+                <img src="/static/qrcode.png" alt="QR Code to connect camera">
             </div>
-        </div>
-
-        <!-- Status Bar (Top) -->
-        <div id="status-bar" class="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent transition-opacity duration-300 hidden">
-            <div id="connection-status" class="status-item">
-                <span id="connection-indicator" class="indicator disconnected"></span>
-                <!-- MODIFIED: Added id="connection-text" to the status span -->
-                <span id="connection-text" class="font-semibold">Waiting for camera...</span>
-            </div>
-            <div class="status-item">
-                <span>FPS: <span id="fps-counter">0</span></span>
-            </div>
-        </div>
-
-        <!-- Viewer Controls (Bottom Right) -->
-        <div id="viewer-controls" class="absolute bottom-4 right-4 flex flex-col items-center gap-3 transition-opacity duration-300 hidden">
-            <div class="bg-gray-800/80 backdrop-blur-md rounded-full p-2 flex flex-col gap-2 shadow-lg">
-                <button id="zoom-in-btn" class="control-btn" title="Zoom In (+)">+</button>
-                <div id="zoom-level" class="text-xs font-mono w-12 text-center">100%</div>
-                <button id="zoom-out-btn" class="control-btn" title="Zoom Out (-)">-</button>
-            </div>
-            <div class="bg-gray-800/80 backdrop-blur-md rounded-full p-2 flex gap-2 shadow-lg">
-                <button id="pan-btn" class="control-btn" title="Pan Mode (P)">✋</button>
-                <button id="freeze-btn" class="control-btn" title="Freeze Frame (Space)">⏸️</button>
-                <button id="reset-view-btn" class="control-btn" title="Reset View (0)">⌂</button>
-                <button id="hud-toggle-btn" class="control-btn" title="Toggle HUD (H)">👀</button>
-                <button id="fullscreen-btn" class="control-btn" title="Fullscreen (F)">⛶</button>
-            </div>
-        </div>
-
-        <!-- Keyboard Shortcuts (Bottom Left) -->
-        <div id="shortcuts-legend" class="absolute bottom-4 left-4 bg-gray-800/80 backdrop-blur-md rounded-lg p-4 text-sm shadow-lg transition-opacity duration-300 hidden">
-            <h4 class="font-bold mb-2">Shortcuts</h4>
-            <table class="w-full text-left">
-                <tbody>
-                    <tr><td class="pr-4">Zoom</td><td class="font-mono text-gray-400">[ + ] / [ - ]</td></tr>
-                    <tr><td class="pr-4">Reset</td><td class="font-mono text-gray-400">[ 0 ]</td></tr>
-                    <tr><td class="pr-4">Freeze</td><td class="font-mono text-gray-400">[ Space ]</td></tr>
-                    <tr><td class="pr-4">Pan Mode</td><td class="font-mono text-gray-400">[ P ]</td></tr>
-                    <tr><td class="pr-4">Fine Pan</td><td class="font-mono text-gray-400">[ Arrows ]</td></tr>
-                    <tr><td class="pr-4">Hide HUD</td><td class="font-mono text-gray-400">[ H ]</td></tr>
-                    <tr><td class="pr-4">Fullscreen</td><td class="font-mono text-gray-400">[ F ]</td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Error Modal -->
-        <div id="error-modal" class="absolute inset-0 bg-gray-900/80 backdrop-blur-lg flex items-center justify-center transition-opacity duration-300 hidden">
-            <div class="bg-gray-800 border border-red-500/50 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl relative">
-                <button id="close-error-btn" class="absolute top-4 right-4 text-gray-500 hover:text-white">&times;</button>
-                <h3 class="text-2xl font-bold text-red-400 mb-2">⚠️ Connection Error</h3>
-                <p id="error-message" class="text-gray-300 mb-6"></p>
-                <button id="retry-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Reload Page</button>
+            <div id="camera-url" title="Click to copy">{{ camera_url }}</div>
+            <div class="status-text">
+                <div class="spinner"></div>
+                <span>Waiting for camera...</span>
             </div>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
-    <script src="{{ url_for('static', filename='js/viewer.js', v=cache_version) }}"></script>
+    <div id="video-container">
+        <img id="video-stream" alt="Live stream from camera">
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const socket = io({
+                transports: ['websocket'],
+                reconnection: true,
+                reconnectionAttempts: Infinity,
+                reconnectionDelay: 1000,
+            });
+
+            const videoContainer = document.getElementById('video-container');
+            const videoStream = document.getElementById('video-stream');
+            const connectionStatus = document.getElementById('connection-status');
+            const urlDisplay = document.getElementById('camera-url');
+
+            let isFrozen = false;
+            let transform = {
+                scale: 1,
+                translateX: 0,
+                translateY: 0
+            };
+
+            function updateTransform() {
+                if (!isFrozen) {
+                     videoStream.style.transform = `translate(${transform.translateX}px, ${transform.translateY}px) scale(${transform.scale})`;
+                }
+            }
+
+            socket.on('connect', () => {
+                console.log('Connected to server as viewer.');
+                socket.emit('viewer_joined');
+            });
+
+            socket.on('camera_connected', (data) => {
+                console.log('Camera connected:', data.camera_id);
+                connectionStatus.style.display = 'none';
+                videoContainer.style.display = 'block';
+            });
+
+            socket.on('camera_already_connected', (data) => {
+                 console.log('Reconnecting to existing camera:', data.camera_id);
+                 connectionStatus.style.display = 'none';
+                 videoContainer.style.display = 'block';
+            });
+
+            socket.on('camera_disconnected', (data) => {
+                console.log('Camera disconnected:', data.camera_id);
+                videoContainer.style.display = 'none';
+                connectionStatus.style.display = 'flex';
+                // Reset view on disconnect
+                transform = { scale: 1, translateX: 0, translateY: 0 };
+                updateTransform();
+            });
+
+            socket.on('new_frame', (data) => {
+                if (!isFrozen) {
+                    videoStream.src = `data:image/jpeg;base64,${data.frame}`;
+                }
+            });
+
+            urlDisplay.addEventListener('click', () => {
+                navigator.clipboard.writeText(urlDisplay.textContent).then(() => {
+                    console.log('URL copied to clipboard');
+                    alert('URL copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy URL: ', err);
+                });
+            });
+
+        });
+    </script>
 </body>
 </html>
